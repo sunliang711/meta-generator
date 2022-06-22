@@ -1,0 +1,24 @@
+{
+    "name": "{{name}}",
+    "description": "{{description}}",
+    "image": "{{image}}",
+    "animation_url": "{{animation_url}}",
+    "web_image": "{{web_image}}",
+    "web_animation_url": "{{web_animation_url}}",
+    "external_link": "{{external_link}}",
+    "attributes": [
+        {%- for attribute in attributes -%}
+        {%- if loop.index==1 -%}
+        {
+            "trait_type": "{{attribute.key}}",
+            "value": "{{attribute.value}}"
+        }
+        {%- else -%}
+        ,{
+            "trait_type": "{{attribute.key}}",
+            "value": "{{attribute.value}}"
+        }
+        {%- endif -%}
+        {%- endfor -%}
+    ]
+}
