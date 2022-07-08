@@ -44,11 +44,11 @@ install(){
 }
 
 gen(){
-    python3 generator.py --input ${1:?'missing excel file'} --sheet ${2:?'missing sheet name'}
+    python3 generator.py --input ${1:?'missing excel file'} --sheet ${2:?'missing sheet name'} --dest ${3:?'missing output dir'}
 }
 
 gend(){
-    python3 generator.py --input ${1:?'missing excel file'} --sheet ${2:?'missing sheet name'} --level debug
+    python3 generator.py --input ${1:?'missing excel file'} --sheet ${2:?'missing sheet name'} --level debug --dest ${3:?'missing output dir'}
 }
 # write your code above
 ###############################################################################

@@ -13,7 +13,7 @@ LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 DATE_FORMAT = "%Y/%m/%d %H:%M:%S %p"
 # logging.basicConfig(filename='my.log', level=logging.DEBUG, format=LOG_FORMAT, datefmt=DATE_FORMAT)
 
-dest = "twgh-meta"
+# dest = "twgh-meta"
 
 
 # required columns
@@ -37,9 +37,11 @@ def main():
         description="generate nft metata data json file from excel file")
     parser.add_argument('--input', help='input execl file', required=True)
     parser.add_argument('--sheet', help='excel sheet name', required=True)
-    parser.add_argument('--level', help='log level',
-                        choices=["debug", "info"], default="info")
+    parser.add_argument('--level', help='log level', choices=["debug", "info"], default="info")
+    parser.add_argument('--dest',help='output dir',required=True)
     args = parser.parse_args()
+
+    dest=args.dest
 
     # template engine
     env = Environment(loader=FileSystemLoader(searchpath="."))
@@ -75,6 +77,9 @@ def main():
         # construct name
         # name format: <TITLE> #<TOKEN_ID>
         title = data[TITLE][i]
+        title = title.replace('\n', ' ')
+        title = title.replace("\"", '\'')
+
         tokenId = data[TOKEN_ID][i]
         logging.debug("title: {} tokenId: {}".format(title, tokenId))
         # name = "{} #{}".format(title,tokenId)
@@ -154,7 +159,7 @@ def main():
         renderedData = template.render(name=name, description=description, image=image, animation_url=animation_url,
                                        web_image=web_image, web_animation_url=web_animation_url, external_link=external_link, attributes=attributes)
 
-        logging.info("write file: {}".format(tokenId))
+        logging.info("write file: '{}'".format(tokenId))
         with open("{}/{}".format(dest, tokenId), 'w') as f:
             f.write(renderedData)
 

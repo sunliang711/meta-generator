@@ -6,6 +6,15 @@
     "web_image": "{{web_image}}",
     "web_animation_url": "{{web_animation_url}}",
     "external_link": "{{external_link}}",
+    "properties":{
+        {%- for attribute in attributes -%}
+        {%- if loop.index==1 -%}
+        "{{attribute.key}}": "{{attribute.value}}"
+        {%- else -%}
+        ,"{{attribute.key}}": "{{attribute.value}}"
+        {%- endif -%}
+        {%- endfor -%}
+    },
     "attributes": [
         {%- for attribute in attributes -%}
         {%- if loop.index==1 -%}
