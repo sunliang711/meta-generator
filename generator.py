@@ -9,6 +9,10 @@ import pandas as pd
 import argparse
 import json
 
+# pip3 install jinja2 pandas openpyxl
+# Usage:
+#       python3 generator.py --input ~/Downloads/test.xlsx --sheet="Trait List_FULL" --level=debug --dest output --attr="Colour Hints" --attr="Element"
+
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 DATE_FORMAT = "%Y/%m/%d %H:%M:%S %p"
 # logging.basicConfig(filename='my.log', level=logging.DEBUG, format=LOG_FORMAT, datefmt=DATE_FORMAT)
@@ -21,7 +25,11 @@ DATE_FORMAT = "%Y/%m/%d %H:%M:%S %p"
 TITLE = "Title"
 TOKEN_ID = "TokenId"
 DESCRIPTION = "Description"
+
 IMAGE = "Image"
+# or
+IMAGE_PREFIX = "ImagePrefix"
+IMAGE_SUFFIX = "ImageSuffix"
 
 # optional columns
 ANIMATION_URL = "AnimationURL"
@@ -37,11 +45,13 @@ def main():
         description="generate nft metata data json file from excel file")
     parser.add_argument('--input', help='input execl file', required=True)
     parser.add_argument('--sheet', help='excel sheet name', required=True)
-    parser.add_argument('--level', help='log level', choices=["debug", "info"], default="info")
-    parser.add_argument('--dest',help='output dir',required=True)
+    parser.add_argument('--level', help='log level',
+                        choices=["debug", "info"], default="info")
+    parser.add_argument('--dest', help='output dir', required=True)
+    parser.add_argument('--attr', help='attribute column', action="append")
     args = parser.parse_args()
 
-    dest=args.dest
+    dest = args.dest
 
     # template engine
     env = Environment(loader=FileSystemLoader(searchpath="."))
@@ -61,8 +71,8 @@ def main():
     try:
         # column_list = pd.read_excel(args.input,sheet_name=args.sheet).columns
         # converters = {col: str for col in column_list}
-        converters = {IMAGE: str, WEB_IMAGE: str,
-                      ANIMATION_URL: str, WEB_ANIMATION_URL: str}
+        # converters = {IMAGE: str, WEB_IMAGE: str,
+        #               ANIMATION_URL: str, WEB_ANIMATION_URL: str}
 
         data = pd.read_excel(
             args.input, sheet_name=args.sheet, keep_default_na=False)
@@ -82,8 +92,8 @@ def main():
 
         tokenId = data[TOKEN_ID][i]
         logging.debug("title: {} tokenId: {}".format(title, tokenId))
-        # name = "{} #{}".format(title,tokenId)
-        name = "{}".format(title)
+        name = "{} #{}".format(title, tokenId)
+        # name = "{}".format(title)
 
         # construct description
         description = data[DESCRIPTION][i]
@@ -92,7 +102,11 @@ def main():
         description = description.replace("\"", '\'')
 
         # construct image
-        image = data[IMAGE][i]
+        if IMAGE in data:
+            image = data[IMAGE][i]
+        else:
+            image = "{}{}{}".format(
+                data[IMAGE_PREFIX][i], tokenId, data[IMAGE_SUFFIX][i])
         logging.debug("image url: {}".format(image))
 
         # construct animation_url
@@ -154,10 +168,18 @@ def main():
                 attributes.append({'key': k, 'value': v})
         except KeyError as e:
             logging.info("no attributes column")
+
+        for attrColumn in args.attr:
+            # print("{}: {} ".format(attrColumn,data[attrColumn][i]))
+            attributes.append(
+                {'key': attrColumn, 'value': data[attrColumn][i]})
         logging.debug("final attributes: {}".format(attributes))
 
         renderedData = template.render(name=name, description=description, image=image, animation_url=animation_url,
                                        web_image=web_image, web_animation_url=web_animation_url, external_link=external_link, attributes=attributes)
+
+        if not os.path.exists(dest):
+            os.makedirs(dest)
 
         logging.info("write file: '{}'".format(tokenId))
         with open("{}/{}".format(dest, tokenId), 'w') as f:
