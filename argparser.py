@@ -14,6 +14,7 @@ def parse_args():
                         choices=["debug", "info"], default="info")
     parser.add_argument('--dest', help='output dir', required=True)
     parser.add_argument('--attr', help='attribute column', action="append")
+    parser.add_argument('--template', help='template file', default='template')
     args = parser.parse_args()
 
     return args

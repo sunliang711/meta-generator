@@ -22,7 +22,7 @@ def main():
 
     # template engine
     env = Environment(loader=FileSystemLoader(searchpath="."))
-    template = env.get_template("template")
+    template = env.get_template(args.template)
 
     # set log level
     if args.level == "debug":
