@@ -9,47 +9,14 @@ import pandas as pd
 import argparse
 import json
 
-# pip3 install jinja2 pandas openpyxl
-# Usage:
-#       python3 generator.py --input ~/Downloads/test.xlsx --sheet="Trait List_FULL" --level=debug --dest output --attr="Colour Hints" --attr="Element"
-
-LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
-DATE_FORMAT = "%Y/%m/%d %H:%M:%S %p"
-# logging.basicConfig(filename='my.log', level=logging.DEBUG, format=LOG_FORMAT, datefmt=DATE_FORMAT)
-
-# dest = "twgh-meta"
-
-
-# required columns
-#COLLECTION_ID = "NFTCollectionID"
-TITLE = "Title"
-TOKEN_ID = "TokenId"
-DESCRIPTION = "Description"
-
-IMAGE = "Image"
-# or
-IMAGE_PREFIX = "ImagePrefix"
-IMAGE_SUFFIX = "ImageSuffix"
-
-# optional columns
-ANIMATION_URL = "AnimationURL"
-WEB_IMAGE = "WebImage"
-WEB_ANIMATION_URL = "WebAnimationURL"
-EXTERNAL_LINK = "ExternalLink"
-ATTRIBUTES = "Attributes"
+# local imports
+import argparser
+from constants import *
 
 
 def main():
     # arg parse
-    parser = argparse.ArgumentParser(
-        description="generate nft metata data json file from excel file")
-    parser.add_argument('--input', help='input execl file', required=True)
-    parser.add_argument('--sheet', help='excel sheet name', required=True)
-    parser.add_argument('--level', help='log level',
-                        choices=["debug", "info"], default="info")
-    parser.add_argument('--dest', help='output dir', required=True)
-    parser.add_argument('--attr', help='attribute column', action="append")
-    args = parser.parse_args()
+    args = argparser.parse_args()
 
     dest = args.dest
 
@@ -57,7 +24,7 @@ def main():
     env = Environment(loader=FileSystemLoader(searchpath="."))
     template = env.get_template("template")
 
-    # log level
+    # set log level
     if args.level == "debug":
         logging.basicConfig(level=logging.DEBUG,
                             format=LOG_FORMAT, datefmt=DATE_FORMAT)
@@ -69,11 +36,6 @@ def main():
 
     # read excel file
     try:
-        # column_list = pd.read_excel(args.input,sheet_name=args.sheet).columns
-        # converters = {col: str for col in column_list}
-        # converters = {IMAGE: str, WEB_IMAGE: str,
-        #               ANIMATION_URL: str, WEB_ANIMATION_URL: str}
-
         data = pd.read_excel(
             args.input, sheet_name=args.sheet, keep_default_na=False)
     except Exception as e:
@@ -84,7 +46,7 @@ def main():
     amount = len(data[TOKEN_ID])
     logging.info("nft amount: {}".format(amount))
     for i in range(amount):
-        # construct name
+        # 1. Construct name
         # name format: <TITLE> #<TOKEN_ID>
         title = data[TITLE][i]
         title = title.replace('\n', ' ')
@@ -95,13 +57,13 @@ def main():
         name = "{} #{}".format(title, tokenId)
         # name = "{}".format(title)
 
-        # construct description
+        # 2. Construct description
         description = data[DESCRIPTION][i]
         logging.debug("description: {}".format(description))
         description = description.replace('\n', ' ')
         description = description.replace("\"", '\'')
 
-        # construct image
+        # 3. Construct image
         if IMAGE in data:
             image = data[IMAGE][i]
         else:
@@ -109,7 +71,7 @@ def main():
                 data[IMAGE_PREFIX][i], tokenId, data[IMAGE_SUFFIX][i])
         logging.debug("image url: {}".format(image))
 
-        # construct animation_url
+        # 4. Construct animation_url
         try:
             animation_url = data[ANIMATION_URL][i]
             print("type: ", type(animation_url))
@@ -122,7 +84,7 @@ def main():
             animation_url = image
         logging.debug("animation url: {}".format(animation_url))
 
-        # construct web_image
+        # 5. Construct web_image
         try:
             web_image = data[WEB_IMAGE][i]
             logging.debug("web image: {}".format(web_image))
@@ -134,7 +96,7 @@ def main():
             web_image = image
         logging.debug("web image: {}".format(web_image))
 
-        # construct web_animation_url
+        # 6. Construct web_animation_url
         web_animation_url = ""
         try:
             web_animation_url = data[WEB_ANIMATION_URL][i]
@@ -147,7 +109,7 @@ def main():
             web_animation_url = animation_url
         logging.debug("web animation url: {}".format(web_animation_url))
 
-        # construct external_link
+        # 7. Construct external_link
         external_link = ""
         try:
             external_link = data[EXTERNAL_LINK][i]
@@ -155,7 +117,7 @@ def main():
             logging.info("no {} column".format(EXTERNAL_LINK))
         logging.info("external link: {}".format(external_link))
 
-        # construct attributes
+        # 8. Construct attributes
         attributes = [
             #{'key': 'k1', 'value': 'v1'},
             #{'key': 'k2', 'value': 'v2'}
@@ -170,7 +132,6 @@ def main():
             logging.info("no attributes column")
 
         for attrColumn in args.attr:
-            # print("{}: {} ".format(attrColumn,data[attrColumn][i]))
             attributes.append(
                 {'key': attrColumn, 'value': data[attrColumn][i]})
         logging.debug("final attributes: {}".format(attributes))
